@@ -1,16 +1,10 @@
 {
   "projects": {
-    "project": {
-      "schemaPath": "schema.json",
+    "prisma": {
+      "schemaPath": "./src/generated/prisma.graphql",
       "extensions": {
         "endpoints": {
-          "default": {
-            "url": "http://X.X.X.X:8080",
-            "headers": {
-              "X-Access-Key": "SECRET"
-            },
-            "subscription": "ws://X.X.X.X:8080"
-          }
+          "default": "http://localhost:4466"
         }
       }
     }

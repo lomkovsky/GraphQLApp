@@ -6,6 +6,7 @@ import Post from './Resolvers/Post';
 import User from './Resolvers/User';
 import Comment from './Resolvers/Comment';
 import Subscription from './Resolvers/Subscription';
+import './prisma';
 
 const pubsub = new PubSub();
 
