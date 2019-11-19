@@ -2,7 +2,7 @@
   type Query {
     users(query: String): [User!]!
     me: User!
-    posts(published: Boolean): [Post!]!
+    posts(query: String): [Post!]!
     post: Post!
     comments: [Comment!]!
   }
@@ -23,12 +23,10 @@
   }
   input CreateUserInput{
     name: String!
-    age: Int
     email: String!
   }
   input UpdateUserInput{
     name: String
-    age: Int
     email: String
   }
   input CreatePostInput{
@@ -53,7 +51,6 @@
   type User{
     id: ID!
     name: String!
-    age: Int
     email: String!
     posts: [Post!]!
     comments: [Comment!]!
@@ -79,9 +76,9 @@
   }
   type PostSubscriptionPayload{
     mutation: MutationType!
-    data: Post!
+    node: Post
   }
   type CommentSubscriptionPayload{
     mutation: MutationType!
-    data: Comment!
+    node: Comment
   }
