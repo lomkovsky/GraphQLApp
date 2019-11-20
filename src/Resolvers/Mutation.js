@@ -1,41 +1,71 @@
-import uuidv4 from 'uuid/v4';
-import { argsToArgsConfig } from 'graphql/type/definition';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import getUserId from '../utils/getUserId';
+import { privateDecrypt } from 'crypto';
 
 const Mutation = {
   async createUser(parent, args, { prisma }, info) {
     const emailTaken = await prisma.exists.User({ email: args.data.email });
+    // const token = jwt.sign({ id: '123' }, process.env.JWT_SECRET);
+    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // console.log(decoded)
     if (emailTaken) {
       throw new Error('Email taken!');
     }
-    return prisma.mutation.createUser({
+    if (args.data.password.length < 5) {
+      throw new Error('password less than 5 characters')
+    }
+    args.data.password = await bcrypt.hash(args.data.password, 8);
+    const user = await prisma.mutation.createUser({
       data: args.data
-    },
-      info
-    );
+    });
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
+    return {
+      user,
+      token
+    }
   },
 
-  async deleteUser(parent, args, { prisma }, info) {
-    const userExist = await prisma.exists.User({ id: args.id });
-    if (!userExist) {
-      throw new Error('User not found!');
+
+  async loginUser(parent, args, { prisma }, info) {
+    const user = await prisma.query.user({ where: { email: args.data.email } });
+    if(!user) {
+      throw new Error('unable to authenticate please try again!');
     }
+    const isMatch = await bcrypt.compare(args.data.password, user.password)
+    if(!isMatch) {
+      throw new Error('unable to authenticate please try again!');
+    }
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
+    return {
+      user,
+      token
+    }
+  },
+
+  async deleteUser(parent, args, { prisma, request }, info) {
+    const userId = getUserId(request);
+    console.log(userId);
     return prisma.mutation.deleteUser({
       where: {
-        id: args.id
+        id: userId
       }
     },
       info
     );
   },
 
-  async updateUser(parent, args, { prisma }, info) {
-    const userExist = await prisma.exists.User({ id: args.id });
-    if (!userExist) {
-      throw new Error('User not found!');
+  async updateUser(parent, args, { prisma, request }, info) {
+    const userId = getUserId(request);
+    if (args.data.password) {
+      if (args.data.password.length < 5) {
+        throw new Error('password less than 5 characters')
+      }
+      args.data.password = await bcrypt.hash(args.data.password, 8);
     }
     return prisma.mutation.updateUser({
       where: {
-        id: args.id
+        id: userId
       },
       data: args.data,
     },
@@ -43,17 +73,15 @@ const Mutation = {
     );
   },
 
-  async createPost(parent, args, { prisma }, info) {
-    const userExist = await prisma.exists.User({ id: args.data.author });
-    if (!userExist) {
-      throw new Error('User not found!');
-    }
+  async createPost(parent, args, { prisma, request }, info) {
+    const userId = getUserId(request);
+    console.log(userId);
     return prisma.mutation.createPost({
       data: {
         ...args.data,
         author: {
           connect: {
-            id: args.data.author
+            id: userId
           }
         }
       }
@@ -62,10 +90,11 @@ const Mutation = {
     );
   },
 
-  async deletePost(parent, args, { prisma }, info) {
-    const postExist = await prisma.exists.Post({ id: args.id });
+  async deletePost(parent, args, { prisma, request }, info) {
+    const userId = getUserId(request);
+    const postExist = await prisma.exists.Post({ id: args.id, author: {id: userId} });
     if (!postExist) {
-      throw new Error('Post not found!');
+      throw new Error('Can`t delete Post!');
     }
     return prisma.mutation.deletePost({
       where: {
@@ -76,7 +105,7 @@ const Mutation = {
     )
   },
 
-  async updatePost(parent, args, { prisma }, info) {
+  async updatePost(parent, args, { prisma, request }, info) {
     const postExist = await prisma.exists.Post({ id: args.id });
     if (!postExist) {
       throw new Error('Post not found!');
