@@ -1,13 +1,18 @@
 import jwt from 'jsonwebtoken';
 
-const getUserId = (request) => {
-  const requestToken = request.request.headers.authorization
-  if (!requestToken) {
+const getUserId = (request, requireAuth = true) => {
+  const header = request.request ? request.request.headers.authorization : request.connection.context.Authorization
+  let decoded = {};
+  if (requireAuth && !header) {
     throw new Error('you need to provide a authorization token!')
   }
-  const token = requestToken.slice(7);
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  return decoded.userId
+  if (header === undefined) {
+    decoded.userId = null;
+  } else {
+    const token = header.slice(7);
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  }
+  return decoded.userId;
 };
 
 export { getUserId as default };
