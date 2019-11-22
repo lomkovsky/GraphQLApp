@@ -19,6 +19,6 @@ const server = new GraphQLServer({
   fragmentReplacements,
 });
 
-server.start(() => {
+server.start({ port: process.env.PORT }, () => {
   console.log('The server is up');
 });
