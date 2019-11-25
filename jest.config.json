@@ -1,12 +1,4 @@
 {
-  "watchPathIgnorePatterns": ["./node_modules/"],
-  "collectCoverage": false,
-  "collectCoverageFrom": [
-    "src/*.js",
-    "!**/node_modules/**",
-    "!**/coverage/**",
-    "!src/prisma.js",
-    "!**/serviceWorker.js",
-    "!**/index.js"
-  ]
+  "globalSetup":"./test/jest/globalSetup.js",
+  "globalTeardown":"./test/jest/globalTeardown.js"
 }
